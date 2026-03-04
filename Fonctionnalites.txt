@@ -1,0 +1,12 @@
+Fonctionnalités 5.2 -->7.0.4
+
+Historique des Query's dans la partie 'Search'
+
+Changement version Java 17 --> 21 (plus performant)
+MongoDB --> 8.2.5 (plus performant)
+
+Implémentation de Graylog Datanode (Fork d'opensearch)
+
+Basé sur OpenSearch, légèrement plus efficace car il est directement codé par les créateurs de graylog donc des compatibilités améliorées.
+
+Bouton dans search '<' et '>' pour passer les dates plus simplement.

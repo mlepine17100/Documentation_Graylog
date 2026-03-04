@@ -1,0 +1,15 @@
+Revaloriser des logs de niveaux 6 en un niveau inférieur, tel que 3 par exemple (ouverture de session échouées sur un serveur Windows passe en niveau 6)
+
+Ajuster des pipelines bien définis pour éviter les infos inutiles de logs, et ainsi faire un gain de place pour d'autres logs supplémentaires
+
+Ajuster la durée de conservation sur 9 mois (entre 6 et 12 mois conseillés par la CNIL)
+
+Fusionner des index, moins de travail pour le serveur, et ensuite filtrer avec les streams (manage rules)
+
+Adapter les niveaux de logs suivant le serveur, (garder les logs des flux entre deux serveurs serait inutile)
+
+Sur les serveurs et Forti bien régler les logs à envoyer
+
+Mettre en place des streams suivant le niveau de logs
+
+Ne pas garder les logs de level4 et + (sauf ceux qui seront revalorisés)
