@@ -429,3 +429,46 @@ Le Pipeline est le moteur de règles qui modifie le contenu des logs pendant qu'
 | **INDEX SET** | Stocke les logs |
 
 ---
+
+# Mise en place d'un disque alloué uniquement au stockage des logs
+
+## Utilité ?
+
+Sur graylog, lorsque de nouveaux logs sont stockés dans les index, ils sont mis dans le volumes monté préalablement dans notre `/opt/graylog` sauf que si notre disque venait à être plein de logs, étant donné que le dossier `/opt/graylog` est directement associé à la partition `/` lorsque le disque sera plein, le système ne fonctionnera plus correctement, donc le serveur risquera de planter.
+
+## Mise en place du disque de stockage
+
+Pour celà, il faut ajouter un nouveau disque à notre serveur, on y ajoutera pour commencer un disque de 250Go.
+
+Ensuite il faut le partitionner :  [Partitionner un disque LVM](./Extend_Part.md)
+
+On peut ensuite voir notre partition de 250Go en faisant un `lsblk`
+
+## Monter notre dossier de logs sur le nouveau disque
+
+Avant de monter quelconque dossier sur le disque, il faut déjà savoir lequel monter exactement, pour les logs stockés sur graylog, ils sont situés dans le volume créé au nom `.graylog-datanode`.
+
+Pour éviter tout conflit de droit, je vais créer un dossier nommé `storage` où je mettrais à l'intérieur les dossiers qui devront aussi être sur le nouveau disque, comme le volume `.graylog_journal`.
+
+#### Pour lier le dossier `storage` au nouveau disque
+```bash
+vgs
+mount /dev/mapper/{Nom_vg_disk2} /opt/graylog/storage
+```
+
+Relancer la commande `lsblk` et voir le montage disque.
+
+## Rendre le montage du dossier persistant
+
+Lorsqu'on fait le montage du dossier sur le nouveau disque, si un redémarrage doit être fait, le montage ne sera plus actif. Pour palier à celà, il faut ajouter une ligne de paramètres dans le fichier `/etc/fstab`
+
+```bash
+/dev/mapper/{Nom_vg_disk2} /opt/graylog/storage  ext4  defaults  0  2
+```
+
+Et relancer la config 
+
+```bash
+systemctl daemon-reload
+```
+
