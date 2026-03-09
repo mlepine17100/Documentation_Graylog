@@ -148,7 +148,7 @@ services:
     networks:
       - graylog
     volumes:
-      - "./.graylog-datanode:/var/lib/graylog-datanode"
+      - "./storage/.graylog-datanode:/var/lib/graylog-datanode"
     restart: "on-failure"
 
   # Graylog: https://hub.docker.com/r/graylog/graylog-enterprise
@@ -191,6 +191,7 @@ services:
       # don't work correctly. You have to use volume mounts.
       # See: https://github.com/Graylog2/docker-compose/issues/99#issuecomment-3800898829
       - "./.graylog_data:/usr/share/graylog/data/data"
+      - "./storage/.graylog_journal:/usr/share/graylog/data/journal"
     restart: "on-failure"
 
 networks:

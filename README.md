@@ -18,5 +18,5 @@ echo "GRAYLOG_ROOT_PASSWORD_SHA2=\"$(echo -n 'mot_de_passe' | shasum -a 256 | aw
 #### Dans le dossier /opt/graylog
 
 ```bash
-mkdir -p .mongodb_data .mongodb_config .graylog_data .graylog-datanode
+mkdir -p storage .mongodb_data .mongodb_config storage/.graylog_data storage/.graylog-datanode
 ```
