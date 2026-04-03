@@ -14,7 +14,7 @@ echo "GRAYLOG_PASSWORD_SECRET=\"$(pwgen -N 1 -s 96)\"" >> /opt/graylog/.env
 echo "GRAYLOG_ROOT_PASSWORD_SHA2=\"$(echo -n 'mot_de_passe' | shasum -a 256 | awk '{print $1}')\"" >> /opt/graylog/.env
 ```
 
-### Il faut aussi mettre en place certains dossiers qui seviront de volumes avec le docker-compose
+### Il faut aussi mettre en place certains dossiers qui serviront de volumes avec le docker-compose
 #### Dans le dossier /opt/graylog
 
 ```bash
