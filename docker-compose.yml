@@ -6,7 +6,7 @@ services:
       - graylog
     volumes:
       - "./.mongodb_data:/data/db"
-      - "./.mongodb_config:/data/db"
+      - "./.mongodb_config:/data/configdb"
 
   # ⚠️ Make sure this is set on the host before starting:
   # echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
@@ -19,6 +19,9 @@ services:
       # GRAYLOG_DATANODE_PASSWORD_SECRET and GRAYLOG_PASSWORD_SECRET MUST be the same value
       GRAYLOG_DATANODE_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET}"
       GRAYLOG_DATANODE_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+#      GRAYLOG_DATANODE_JAVA_OPTS: "-Xms7g -Xmx7g"
+#      GRAYLOG_DATANODE_MAX_MEMORY: "7g"
+#      OPENSEARCH_JAVA_OPTS: "-Xms7g -Xmx7g"
     ulimits:
       memlock:
         hard: -1
@@ -33,7 +36,9 @@ services:
     networks:
       - graylog
     volumes:
-      - "./.graylog-datanode:/var/lib/graylog-datanode"
+      - "./storage/.graylog-datanode:/var/lib/graylog-datanode"
+      - "./jvm.options:/etc/graylog/datanode/jvm.options"
+      - "./datanode.conf:/etc/graylog/datanode/datanode.conf"
     restart: "on-failure"
 
   graylog:
@@ -52,8 +57,29 @@ services:
       GRAYLOG_ROOT_PASSWORD_SHA2: "${GRAYLOG_ROOT_PASSWORD_SHA2}"
       TZ: "Europe/Paris"
       GRAYLOG_ROOT_TIMEZONE: "Europe/Paris"
+#      GRAYLOG_SERVER_JAVA_OPTS: "-Xms2g -Xmx2g -server -XX:+UseG1GC -XX:-OmitStackTraceInFastThrow"
+#      GRAYLOG_SERVER_JAVA_OPTS: "-Xms2g -Xmx2g -server -XX:+UseG1GC -XX:-OmitStackTraceInFastThrow -Dmail.smtps.ssl.trust=* -Dmail.smtps.ssl.checkserveridentity=false"
+      GRAYLOG_VERSION_CHECK_ENABLED: "false"
+      GRAYLOG_SERVER_JAVA_OPTS: "-Xms2g -Xmx2g -server -XX:+UseG1GC -Dmail.smtp.ssl.trust=* -Dmail.smtps.ssl.trust=* -Dmail.smtp.ssl.checkserveridentity=false -Dmail.smtps.ssl.checkserveridentity=false"
       GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
-      GRAYLOG_HTTP_EXTERNAL_URI: "https://SVDL01-LOG-01.cgo.local/"
+      GRAYLOG_HTTP_EXTERNAL_URI: "https://SVPL01-SVLOG-03.cgo.local/"
+      # Configuration SMTP
+      GRAYLOG_TRANSPORT_EMAIL_ENABLED: "true"
+      GRAYLOG_TRANSPORT_EMAIL_TLS_TRUST_ALL: "true"
+      GRAYLOG_TRANSPORT_EMAIL_HOSTNAME: "10.100.20.7"
+      GRAYLOG_TRANSPORT_EMAIL_PORT: 587
+      GRAYLOG_TRANSPORT_EMAIL_USE_TLS: "true"
+      GRAYLOG_TRANSPORT_EMAIL_USE_SSL: "false"
+      GRAYLOG_TRANSPORT_EMAIL_USE_AUTH: "true"
+#      GRAYLOG_TRANSPORT_EMAIL_PORT: 465
+#      GRAYLOG_TRANSPORT_EMAIL_USE_TLS: "false"
+#      GRAYLOG_TRANSPORT_EMAIL_USE_SSL: "true"
+      GRAYLOG_TRANSPORT_EMAIL_AUTH_USERNAME: "${GRAYLOG_TRANSPORT_EMAIL_AUTH_USERNAME}"
+      GRAYLOG_TRANSPORT_EMAIL_AUTH_PASSWORD: "${GRAYLOG_TRANSPORT_EMAIL_AUTH_PASSWORD}"
+      GRAYLOG_TRANSPORT_EMAIL_SUBJECT_PREFIX: "[Graylog]"
+      GRAYLOG_TRANSPORT_EMAIL_FROM_EMAIL: "${GRAYLOG_TRANSPORT_EMAIL_AUTH_USERNAME}"
+      GRAYLOG_TRANSPORT_FROM_EMAILNAME: "Graylog Alerting"
+
       GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
     ports:
     - "5044:5044/tcp"   # Beats
@@ -75,6 +101,7 @@ services:
       # don't work correctly. You have to use volume mounts.
       # See: https://github.com/Graylog2/docker-compose/issues/99#issuecomment-3800898829
       - "./.graylog_data:/usr/share/graylog/data/data"
+      - "./storage/.graylog_journal:/usr/share/graylog/data/journal"
     restart: "on-failure"
 
 networks:
