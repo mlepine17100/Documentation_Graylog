@@ -102,14 +102,13 @@ GRAYLOG_PASSWORD_SECRET="k6sq8kawjx27GlSII5mAUpdlwxJPnkuxREsGdza10NxVVs6SII7ennQ
 # et insérez la valeur de hachage résultante dans la ligne suivante.
 # MODIFIEZ CECI !
 # id = admin
-GRAYLOG_ROOT_PASSWORD_SHA2="6df4825585833b8a169e3c0e388909f4047e4d8f78ce45401c6420cf69d460d5"
+GRAYLOG_ROOT_PASSWORD_SHA2="00fc560dda8b1fd3a277b5f5d8ff3e259d39828d42c40f5c43966df5d5ee5664"
 ```
 
 4. Créer le fichier `docker-compose.yml` complet.
 
 ```yaml
 services:
-  # MongoDB: https://hub.docker.com/_/mongo/
   mongodb:
     image: "mongo:8.2.5"
     restart: "on-failure"
@@ -117,11 +116,7 @@ services:
       - graylog
     volumes:
       - "./.mongodb_data:/data/db"
-      - "./.mongodb_config:/data/db"
-
-  # For DataNode setup, graylog starts with a preflight UI, this is a change from just using OpenSearch/Elasticsearch.
-  # Please take a look at the README at the top of this repo or the regular docs for more info.
-  # Graylog Data Node: https://hub.docker.com/r/graylog/graylog-datanode
+      - "./.mongodb_config:/data/configdb"
 
   # ⚠️ Make sure this is set on the host before starting:
   # echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
@@ -134,6 +129,9 @@ services:
       # GRAYLOG_DATANODE_PASSWORD_SECRET and GRAYLOG_PASSWORD_SECRET MUST be the same value
       GRAYLOG_DATANODE_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET}"
       GRAYLOG_DATANODE_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+#      GRAYLOG_DATANODE_JAVA_OPTS: "-Xms7g -Xmx7g"
+#      GRAYLOG_DATANODE_MAX_MEMORY: "7g"
+#      OPENSEARCH_JAVA_OPTS: "-Xms7g -Xmx7g"
     ulimits:
       memlock:
         hard: -1
@@ -149,9 +147,10 @@ services:
       - graylog
     volumes:
       - "./storage/.graylog-datanode:/var/lib/graylog-datanode"
+      - "./jvm.options:/etc/graylog/datanode/jvm.options"
+      - "./datanode.conf:/etc/graylog/datanode/datanode.conf"
     restart: "on-failure"
 
-  # Graylog: https://hub.docker.com/r/graylog/graylog-enterprise
   graylog:
     hostname: "server"
     image: "graylog/graylog:7.0.4"
@@ -168,18 +167,39 @@ services:
       GRAYLOG_ROOT_PASSWORD_SHA2: "${GRAYLOG_ROOT_PASSWORD_SHA2}"
       TZ: "Europe/Paris"
       GRAYLOG_ROOT_TIMEZONE: "Europe/Paris"
+#      GRAYLOG_SERVER_JAVA_OPTS: "-Xms2g -Xmx2g -server -XX:+UseG1GC -XX:-OmitStackTraceInFastThrow"
+#      GRAYLOG_SERVER_JAVA_OPTS: "-Xms2g -Xmx2g -server -XX:+UseG1GC -XX:-OmitStackTraceInFastThrow -Dmail.smtps.ssl.trust=* -Dmail.smtps.ssl.checkserveridentity=false"
+      GRAYLOG_VERSION_CHECK_ENABLED: "false"
+      GRAYLOG_SERVER_JAVA_OPTS: "-Xms2g -Xmx2g -server -XX:+UseG1GC -Dmail.smtp.ssl.trust=* -Dmail.smtps.ssl.trust=* -Dmail.smtp.ssl.checkserveridentity=false -Dmail.smtps.ssl.checkserveridentity=false"
       GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
-      GRAYLOG_HTTP_EXTERNAL_URI: "https://SVDL01-LOG-01.cgo.local/"
+      GRAYLOG_HTTP_EXTERNAL_URI: "https://SVPL01-SVLOG-03.cgo.local/"
+      # Configuration SMTP
+      GRAYLOG_TRANSPORT_EMAIL_ENABLED: "true"
+      GRAYLOG_TRANSPORT_EMAIL_TLS_TRUST_ALL: "true"
+      GRAYLOG_TRANSPORT_EMAIL_HOSTNAME: "10.100.20.7"
+      GRAYLOG_TRANSPORT_EMAIL_PORT: 587
+      GRAYLOG_TRANSPORT_EMAIL_USE_TLS: "true"
+      GRAYLOG_TRANSPORT_EMAIL_USE_SSL: "false"
+      GRAYLOG_TRANSPORT_EMAIL_USE_AUTH: "true"
+#      GRAYLOG_TRANSPORT_EMAIL_PORT: 465
+#      GRAYLOG_TRANSPORT_EMAIL_USE_TLS: "false"
+#      GRAYLOG_TRANSPORT_EMAIL_USE_SSL: "true"
+      GRAYLOG_TRANSPORT_EMAIL_AUTH_USERNAME: "${GRAYLOG_TRANSPORT_EMAIL_AUTH_USERNAME}"
+      GRAYLOG_TRANSPORT_EMAIL_AUTH_PASSWORD: "${GRAYLOG_TRANSPORT_EMAIL_AUTH_PASSWORD}"
+      GRAYLOG_TRANSPORT_EMAIL_SUBJECT_PREFIX: "[Graylog]"
+      GRAYLOG_TRANSPORT_EMAIL_FROM_EMAIL: "${GRAYLOG_TRANSPORT_EMAIL_AUTH_USERNAME}"
+      GRAYLOG_TRANSPORT_FROM_EMAILNAME: "Graylog Alerting"
+
       GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
     ports:
     - "5044:5044/tcp"   # Beats
     - "514:5140/udp"   # Syslog
     - "514:5140/tcp"   # Syslog
-    - "5555:5555/tcp"   # RAW TCP
-    - "5555:5555/udp"   # RAW UDP
+#    - "5555:5555/tcp"   # RAW TCP
+#    - "5555:5555/udp"   # RAW UDP
     - "9000:9000/tcp"   # Server API
-    - "12201:12201/tcp" # GELF TCP
-    - "12201:12201/udp" # GELF UDP
+#    - "12201:12201/tcp" # GELF TCP
+#    - "12201:12201/udp" # GELF UDP
     #- "127.0.0.1:10000:10000/tcp" # Custom TCP port
     #- "127.0.0.1:10000:10000/udp" # Custom UDP port
     - "13301:13301/tcp" # Forwarder data
